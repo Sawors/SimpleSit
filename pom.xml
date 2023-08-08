@@ -11,10 +11,10 @@
         io.github.sawors
     </groupId>
     <artifactId>
-        SimpleSit
+        simple-sit
     </artifactId>
     <version>
-        1.0-SNAPSHOT
+        1.0
     </version>
     <packaging>
         jar
@@ -104,12 +104,15 @@
                 https://repo.papermc.io/repository/maven-public/
             </url>
         </repository>
+    </repositories>
+
+    <distributionManagement>
         <repository>
             <id>sawors-repo-releases</id>
             <name>Sawors Repository</name>
             <url>https://maven.sawors.net/releases</url>
         </repository>
-    </repositories>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -125,11 +128,6 @@
             <scope>
                 provided
             </scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.sawors</groupId>
-            <artifactId>slogger</artifactId>
-            <version>1.0</version>
         </dependency>
     </dependencies>
 </project>

@@ -1,4 +1,5 @@
 package io.github.sawors.simplesit;
+
 import io.papermc.paper.math.Rotations;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -24,18 +25,34 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.spigotmc.event.entity.EntityDismountEvent;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 
 public class SittingManager implements Listener{
     
     public static NamespacedKey utilityKey = new NamespacedKey(SimpleSit.getPlugin(),"seat");
-    private static final Set<UUID> sittingPlayers = new HashSet<>();
+    
+    /**
+     * Used to check if a player is currently seated on a seat managed by this plugin.
+     *
+     * @param player the player to check if they are seated
+     * @return weather or not the player is currently seated
+     */
+    public static boolean isPlayerSitting(Player player){
+        return player.isInsideVehicle() && player.getVehicle() != null && isSeatEntity(player.getVehicle());
+    }
+    
+    /**
+     * Used to check for an entity if it is a seat created by this plugin.
+     *
+     * @param entity the entity to check
+     * @return weather or not this entity is a seat created by this plugin
+     */
+    public static boolean isSeatEntity(Entity entity){
+        return Objects.equals(entity.getPersistentDataContainer().get(utilityKey,PersistentDataType.STRING),getEntityIdentifier());
+    }
     
     @EventHandler
-    public static void playerSit(PlayerInteractEvent event){
+    protected static void playerSit(PlayerInteractEvent event){
         final Block b = event.getClickedBlock();
         final Player p = event.getPlayer();
         if(
@@ -79,8 +96,13 @@ public class SittingManager implements Listener{
     }
     
     
-    
-    public static void sitPlayerOnBlock(Player p, Block seat, Axis axis){
+    /**
+     * Used to make a player sit on top of a block.
+     * @param player the player to make sit
+     * @param seat the block on top of which the player will sit
+     * @param axis the orientation of the sitting position. This is mainly used for the player's legs orientation
+     */
+    protected static void sitPlayerOnBlock(Player player, Block seat, Axis axis){
         if(!seat.getType().isSolid()) return;
         final Vector reference = new Vector(0,0,1);
         final Vector offset = seat.getBlockData() instanceof Stairs stairs ?
@@ -113,7 +135,7 @@ public class SittingManager implements Listener{
                         armorStand.addEquipmentLock(EquipmentSlot.FEET, ArmorStand.LockType.ADDING_OR_CHANGING);
                         armorStand.addEquipmentLock(EquipmentSlot.HAND, ArmorStand.LockType.ADDING_OR_CHANGING);
                         armorStand.addEquipmentLock(EquipmentSlot.OFF_HAND, ArmorStand.LockType.ADDING_OR_CHANGING);
-                        armorStand.getPersistentDataContainer().set(utilityKey, PersistentDataType.STRING, new SittingManager().getEntityIdentifier());
+                        armorStand.getPersistentDataContainer().set(utilityKey, PersistentDataType.STRING, getEntityIdentifier());
                         final Location location = armorStand.getLocation();
                         location.setYaw(yaw);
                         armorStand.teleport(location);
@@ -122,49 +144,58 @@ public class SittingManager implements Listener{
                     }
                 }
         );
-        final Location rotate = p.getLocation();
+        final Location rotate = player.getLocation();
         rotate.setYaw(yaw);
-        p.teleport(rotate);
+        player.teleport(rotate);
         new BukkitRunnable(){
             @Override
             public void run() {
-                seatEntity.addPassenger(p);
-                sittingPlayers.add(p.getUniqueId());
+                seatEntity.addPassenger(player);
             }
         }.runTask(SimpleSit.getPlugin());
     }
     
-    public static void sitPlayer(Player p){
-        final float yaw = p.getLocation().getYaw();
-        SittingManager.sitPlayerOnBlock(p,p.getLocation().add(0,-.1,0).getBlock(), yaw >= 315 || yaw < 45 || (yaw >= 135 && yaw < 225) ? Axis.X : Axis.Z);
+    /**
+     * Make the player sit on top of the block they are currently standing on. This will work only if the player is standing on top of a solid block.
+     * @param player the player to make sit
+     */
+    public static void sitPlayer(Player player){
+        final float yaw = player.getLocation().getYaw();
+        SittingManager.sitPlayerOnBlock(player,player.getLocation().add(0,-.1,0).getBlock(), yaw >= 315 || yaw < 45 || (yaw >= 135 && yaw < 225) ? Axis.X : Axis.Z);
     }
     
     @EventHandler
-    public static void removeSeatEntityOnDismount(EntityDismountEvent event){
-        if(event.getEntity() instanceof Player player
-                && event.getDismounted() instanceof ArmorStand stand
-                && Objects.equals(stand.getPersistentDataContainer().get(utilityKey,PersistentDataType.STRING),new SittingManager().getEntityIdentifier())
-        ){
-            stand.remove();
-            player.teleport(player.getLocation().add(0,1,0));
-        }
+    protected static void removeSeatEntityOnDismount(EntityDismountEvent event){
+        // Don't worry, the check to see if the entity is a valid seat is done in the method ! This will fail silently if the entity is not a seat.
+        destroySeat(event.getDismounted());
     }
     
     @EventHandler
-    public static void removeSeatEntityOnServerStart(PluginEnableEvent event){
-        final String identitfier = new SittingManager().getEntityIdentifier();
+    protected static void removeSeatEntityOnServerStart(PluginEnableEvent event){
         if(event.getPlugin().equals(SimpleSit.getPlugin())){
             for(World world : Bukkit.getWorlds()){
                 for(Entity e : world.getEntitiesByClass(ArmorStand.class)){
-                    if(Objects.equals(e.getPersistentDataContainer().get(utilityKey,PersistentDataType.STRING),identitfier)){
-                        e.remove();
-                    }
+                    // Don't worry, the check to see if the entity is a valid seat is done in the method ! This will fail silently if the entity is not a seat.
+                    destroySeat(e);
                 }
             }
         }
     }
     
-    public String getEntityIdentifier() {
+    public static void destroySeat(Entity seat){
+        if(isSeatEntity(seat)){
+            seat.remove();
+            for(Entity passenger : seat.getPassengers()){
+                passenger.teleport(passenger.getLocation().add(0,1,0));
+            }
+        }
+    }
+    
+    /**
+     *
+     * @return the identifier used by this plugin to mark seats
+     */
+    protected static String getEntityIdentifier() {
         return "seat";
     }
 }
