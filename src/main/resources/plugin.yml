@@ -1,0 +1,14 @@
+name: SimpleSit
+version: '${project.version}'
+main: io.github.sawors.simplesit.SimpleSit
+api-version: '1.20'
+commands:
+  sit:
+    description: /<command> allows you to sit on the block you are currently standing on
+    permission: sit.sit
+permissions:
+  sit.sit:
+    description: Allows the user to sit themselves
+  sit.force-sit:
+    description: Allows the user to force sit other players
+    default: op
