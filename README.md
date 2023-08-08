@@ -2,7 +2,13 @@
 A very simple and lightweight Minecraft plugin to allow players to sit
 
 ## For users
+Drop the [latest release](https://github.com/Sawors/SimpleSit/releases) of the plugin in your server `/plugins` directory.
 
+To use the plugin, the main command is `/sit` which allows you to sit everywhere (*permission: `sit.sit`*).
+
+**You can create in-game seats by putting signs on the side of a stair block.**
+
+For allowed players, you can force other players to sit with the command `/sit <playername> [<other-players>...]` (*permission: sit.force-sit*)
 ## For developpers
 To integrate the plugin in your projects, add this to your project (replace LATEST_PLUGIN_VERSION with the latest released plugin version):
 
