@@ -71,6 +71,7 @@ public class SittingManager implements Listener{
                         && event.getHand() != null
                         && event.getHand().equals(EquipmentSlot.HAND)
                         && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)
+                        && p.hasPermission("sit.sit")
         ){
             if(p.isJumping() || p.isSwimming() || p.isFlying() || p.isClimbing() || p.isBlocking() || p.isRiptiding() || p.isSprinting()){
                 p.sendActionBar(Component.text("you must be standing still to sit").color(NamedTextColor.RED));
