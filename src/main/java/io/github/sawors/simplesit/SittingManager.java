@@ -105,6 +105,9 @@ public class SittingManager implements Listener{
      */
     protected static void sitPlayerOnBlock(Player player, Block seat, Axis axis){
         if(!seat.getType().isSolid()) return;
+        PlayerSitEvent event = new PlayerSitEvent(player);
+        Bukkit.getServer().getPluginManager().callEvent(event);
+        if(event.isCancelled()) return;
         final Vector reference = new Vector(0,0,1);
         final Vector offset = seat.getBlockData() instanceof Stairs stairs ?
                 stairs.getFacing().getDirection().multiply(-.20).add(new Vector(0,-0.5,0))
@@ -162,13 +165,22 @@ public class SittingManager implements Listener{
      */
     public static void sitPlayer(Player player){
         final float yaw = player.getLocation().getYaw();
-        SittingManager.sitPlayerOnBlock(player,player.getLocation().add(0,-.1,0).getBlock(), yaw >= 315 || yaw < 45 || (yaw >= 135 && yaw < 225) ? Axis.X : Axis.Z);
+        sitPlayerOnBlock(player,player.getLocation().add(0,-.1,0).getBlock(), yaw >= 315 || yaw < 45 || (yaw >= 135 && yaw < 225) ? Axis.X : Axis.Z);
     }
     
     @EventHandler
     protected static void removeSeatEntityOnDismount(EntityDismountEvent event){
-        // Don't worry, the check to see if the entity is a valid seat is done in the method ! This will fail silently if the entity is not a seat.
-        destroySeat(event.getDismounted());
+        if(isSeatEntity(event.getDismounted())){
+            if(event.getEntity() instanceof Player player){
+                PlayerLeaveSitEvent leaveEvent = new PlayerLeaveSitEvent(player);
+                Bukkit.getServer().getPluginManager().callEvent(leaveEvent);
+                if(leaveEvent.isCancelled()) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+            destroySeat(event.getDismounted());
+        }
     }
     
     @EventHandler
