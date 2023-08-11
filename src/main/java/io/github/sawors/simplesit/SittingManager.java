@@ -105,7 +105,7 @@ public class SittingManager implements Listener{
      */
     protected static void sitPlayerOnBlock(Player player, Block seat, Axis axis){
         if(!seat.getType().isSolid()) return;
-        PlayerSitEvent event = new PlayerSitEvent(player);
+        PlayerSitEvent event = new PlayerSitEvent(player,seat);
         Bukkit.getServer().getPluginManager().callEvent(event);
         if(event.isCancelled()) return;
         final Vector reference = new Vector(0,0,1);

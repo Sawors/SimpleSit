@@ -1,5 +1,6 @@
 package io.github.sawors.simplesit;
 
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -10,9 +11,11 @@ public class PlayerSitEvent extends PlayerEvent implements Cancellable {
     
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled = false;
+    private final Block seat;
     
-    public PlayerSitEvent(@NotNull Player who) {
+    public PlayerSitEvent(@NotNull Player who, Block seat) {
         super(who);
+        this.seat = seat;
     }
     
     @Override
@@ -28,5 +31,9 @@ public class PlayerSitEvent extends PlayerEvent implements Cancellable {
     @Override
     public void setCancelled(boolean cancel) {
         cancelled = cancel;
+    }
+    
+    public Block getSeat() {
+        return seat;
     }
 }
