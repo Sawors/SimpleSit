@@ -36,4 +36,8 @@ public class PlayerSitEvent extends PlayerEvent implements Cancellable {
     public Block getSeat() {
         return seat;
     }
+    
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }
